@@ -74,6 +74,9 @@ export function Dashboard() {
     content: "Content",
   }
 
+  const defaultTaskTypes = ["coding", "leetcode", "content"] as const
+  const tasksToShow = defaultTaskTypes.map((type) => tasks.find((t) => t.type === type) ?? { id: type, type, date: "", completed: false })
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -112,7 +115,7 @@ export function Dashboard() {
             <CardDescription>Mark done as you go</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {tasks.map((task) => (
+            {tasksToShow.map((task) => (
               <label
                 key={task.id}
                 className="flex cursor-pointer items-center gap-3 rounded-lg border border-border p-3 transition-colors hover:bg-accent/30"

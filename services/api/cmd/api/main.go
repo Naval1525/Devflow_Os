@@ -49,6 +49,7 @@ func main() {
 	sessionRepo := repository.NewSessionRepository(db)
 	oppRepo := repository.NewOpportunityRepository(db)
 	financeRepo := repository.NewFinanceRepository(db)
+	codingLogRepo := repository.NewCodingLogRepository(db)
 
 	authSvc := service.NewAuthService(userRepo, cfg.JWTSecret, 0)
 	taskSvc := service.NewTaskService(taskRepo)
@@ -57,6 +58,7 @@ func main() {
 	sessionSvc := service.NewSessionService(sessionRepo)
 	oppSvc := service.NewOpportunityService(oppRepo)
 	financeSvc := service.NewFinanceService(financeRepo)
+	codingLogSvc := service.NewCodingLogService(codingLogRepo)
 	aiSvc := service.NewAIContentService(cfg.GeminiAPIKey)
 
 	authH := handler.NewAuthHandler(authSvc)
@@ -66,6 +68,7 @@ func main() {
 	sessionH := handler.NewSessionHandler(sessionSvc)
 	oppH := handler.NewOpportunityHandler(oppSvc)
 	financeH := handler.NewFinanceHandler(financeSvc)
+	codingLogH := handler.NewCodingLogHandler(codingLogSvc)
 	aiH := handler.NewAIHandler(aiSvc)
 
 	r := chi.NewRouter()
@@ -92,6 +95,8 @@ func main() {
 		r.Patch("/opportunities/{id}", oppH.Update)
 		r.Post("/finances", financeH.Create)
 		r.Get("/finances", financeH.List)
+		r.Post("/coding-logs", codingLogH.Create)
+		r.Get("/coding-logs", codingLogH.List)
 		r.Post("/generate-content", aiH.GenerateContent)
 	})
 

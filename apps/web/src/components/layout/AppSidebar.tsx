@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   Lightbulb,
   Code2,
+  Terminal,
   Briefcase,
   Wallet,
   Sparkles,
@@ -12,6 +13,7 @@ import { Separator } from "@/components/ui/separator"
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/coding-log", label: "Coding log", icon: Terminal },
   { to: "/ideas", label: "Ideas", icon: Lightbulb },
   { to: "/leetcode", label: "LeetCode", icon: Code2 },
   { to: "/opportunities", label: "Opportunities", icon: Briefcase },

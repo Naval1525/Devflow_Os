@@ -72,6 +72,14 @@ type LeetCodeLog struct {
 	CreatedAt    time.Time  `json:"created_at"`
 }
 
+type CodingLog struct {
+	ID          uuid.UUID `json:"id"`
+	UserID      uuid.UUID `json:"user_id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
 type Session struct {
 	ID        uuid.UUID  `json:"id"`
 	UserID    uuid.UUID  `json:"user_id"`

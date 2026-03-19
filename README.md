@@ -37,13 +37,15 @@ Set `DATABASE_URL` in your shell, then run psql. The `.env` in `services/api` is
 cd infra/db
 export DATABASE_URL="postgres://user:password@your-host.neon.tech/neondb?sslmode=require"   # or: source ../services/api/.env  if you have one
 psql "$DATABASE_URL" -f migrations/001_schema.sql
+psql "$DATABASE_URL" -f migrations/002_coding_logs.sql
 ```
 
 **Option B — pass the URL directly:**
 
 ```bash
 cd infra/db
-psql "postgres://user:password@your-host.neon.tech/neondb?sslmode=require" -f migrations/001_schema.sql
+psql "YOUR_URL" -f migrations/001_schema.sql
+psql "YOUR_URL" -f migrations/002_coding_logs.sql
 ```
 
 Replace the URL with your real Neon (or other) connection string from `services/api/.env`. Use quotes so special characters in the password don’t break the command.

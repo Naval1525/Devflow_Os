@@ -6,11 +6,20 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 )
 
 var ErrGeminiNotConfigured = errors.New("gemini api key not configured")
+
+var AllowedModels = []string{
+	"gemini-2.5-flash",
+	"gemini-2.5-flash-lite",
+	"gemini-2.5-pro",
+}
+
+const DefaultModel = "gemini-2.5-flash"
 
 type AIContentService struct {
 	apiKey     string
@@ -24,9 +33,19 @@ func NewAIContentService(apiKey string) *AIContentService {
 	}
 }
 
+func isValidModel(m string) bool {
+	for _, allowed := range AllowedModels {
+		if m == allowed {
+			return true
+		}
+	}
+	return false
+}
+
 type GenerateContentInput struct {
-	Text   string   `json:"text"`
+	Text    string   `json:"text"`
 	Formats []string `json:"formats"` // "tweet", "reel_script", "hook"
+	Model   string   `json:"model"`   // optional: gemini-2.5-flash, gemini-2.5-flash-lite, gemini-2.5-pro
 }
 
 type GenerateContentOutput struct {
@@ -39,18 +58,26 @@ func (s *AIContentService) Generate(ctx context.Context, input GenerateContentIn
 	if s.apiKey == "" {
 		return nil, ErrGeminiNotConfigured
 	}
-	prompt := buildPrompt(input)
+	model := input.Model
+	if !isValidModel(model) {
+		model = DefaultModel
+	}
+	systemPrompt := buildSystemPrompt(input.Formats)
+	userPrompt := buildUserPrompt(input.Text, input.Formats)
 	reqBody := map[string]interface{}{
+		"systemInstruction": map[string]interface{}{
+			"parts": []map[string]interface{}{{"text": systemPrompt}},
+		},
 		"contents": []map[string]interface{}{
-			{"parts": []map[string]interface{}{{"text": prompt}}},
+			{"parts": []map[string]interface{}{{"text": userPrompt}}},
 		},
 		"generationConfig": map[string]interface{}{
 			"maxOutputTokens": 1024,
-			"temperature":     0.7,
+			"temperature":    0.6,
 		},
 	}
 	body, _ := json.Marshal(reqBody)
-	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=%s", s.apiKey)
+	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s", model, s.apiKey)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
@@ -58,10 +85,17 @@ func (s *AIContentService) Generate(ctx context.Context, input GenerateContentIn
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gemini request: %w", err)
 	}
 	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
+		var errBody []byte
+		errBody, _ = io.ReadAll(resp.Body)
+		errMsg := string(errBody)
+		if errMsg != "" && len(errMsg) < 500 {
+			return nil, fmt.Errorf("gemini api %d: %s", resp.StatusCode, errMsg)
+		}
 		return nil, fmt.Errorf("gemini api error: %d", resp.StatusCode)
 	}
 	var result struct {
@@ -76,15 +110,31 @@ func (s *AIContentService) Generate(ctx context.Context, input GenerateContentIn
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, err
 	}
-	if len(result.Candidates) == 0 || len(result.Candidates[0].Content.Parts) == 0 {
-		return nil, errors.New("no content in response")
+	if len(result.Candidates) == 0 {
+		return nil, errors.New("gemini returned no candidates (possible safety block or model error)")
+	}
+	if len(result.Candidates[0].Content.Parts) == 0 {
+		return nil, errors.New("gemini returned empty content")
 	}
 	text := result.Candidates[0].Content.Parts[0].Text
 	return parseGeneratedText(text, input.Formats), nil
 }
 
-func buildPrompt(input GenerateContentInput) string {
-	formats := input.Formats
+func buildSystemPrompt(formats []string) string {
+	if len(formats) == 0 {
+		formats = []string{"tweet", "reel_script", "hook"}
+	}
+	return `You are a dev creator content assistant. Turn the user's input (coding notes, LeetCode solutions, ideas) into ready-to-post content.
+
+Rules:
+1. Output ONLY the requested formats. Use exactly these labels on their own line: TWEET:, REEL SCRIPT:, HOOK:
+2. Tweet: under 280 characters, engaging, 1-2 relevant hashtags (e.g. #Coding #LeetCode).
+3. Hook: one punchy line only. No hashtags.
+4. Reel script: 3-5 numbered steps. Each step: number, then (brief visual/action in parentheses), then the line in quotes. Example: 1. (Confused look) "Got you stuck?" 2. (Lightbulb) "Here's the fix:"
+5. Be concise and actionable. No filler.`
+}
+
+func buildUserPrompt(text string, formats []string) string {
 	if len(formats) == 0 {
 		formats = []string{"tweet", "reel_script", "hook"}
 	}
@@ -92,17 +142,17 @@ func buildPrompt(input GenerateContentInput) string {
 	for _, f := range formats {
 		switch f {
 		case "tweet":
-			want = append(want, "a short tweet (under 280 chars)")
+			want = append(want, "TWEET")
 		case "reel_script":
-			want = append(want, "a short reel script (3-5 lines)")
+			want = append(want, "REEL SCRIPT")
 		case "hook":
-			want = append(want, "a punchy hook (one line)")
+			want = append(want, "HOOK")
 		}
 	}
 	if len(want) == 0 {
-		want = []string{"a tweet", "a reel script", "a hook"}
+		want = []string{"TWEET", "REEL SCRIPT", "HOOK"}
 	}
-	return fmt.Sprintf("Based on this input, generate the following. Keep each section concise.\n\nInput:\n%s\n\nGenerate:\n- %s\n\nRespond with clear labels like TWEET:, REEL SCRIPT:, HOOK: so the response can be parsed.", input.Text, strings.Join(want, "\n- "))
+	return fmt.Sprintf("Generate only: %s\n\nUser input:\n%s", strings.Join(want, ", "), text)
 }
 
 func parseGeneratedText(text string, _ []string) *GenerateContentOutput {

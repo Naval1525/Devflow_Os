@@ -6,6 +6,7 @@ import { AppLayout } from "@/components/layout/AppLayout"
 import { Login } from "@/pages/Login"
 import { Signup } from "@/pages/Signup"
 import { Dashboard } from "@/pages/Dashboard"
+import { CodingLog } from "@/pages/CodingLog"
 import { Ideas } from "@/pages/Ideas"
 import { LeetCode } from "@/pages/LeetCode"
 import { Opportunities } from "@/pages/Opportunities"
@@ -76,6 +77,7 @@ export default function App() {
             }
           >
             <Route index element={<Dashboard />} />
+            <Route path="coding-log" element={<CodingLog />} />
             <Route path="ideas" element={<Ideas />} />
             <Route path="leetcode" element={<LeetCode />} />
             <Route path="opportunities" element={<Opportunities />} />

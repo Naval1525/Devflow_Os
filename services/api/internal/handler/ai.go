@@ -4,7 +4,9 @@ import (
 	"devflowos/api/internal/middleware"
 	"devflowos/api/internal/service"
 	"encoding/json"
+	"log/slog"
 	"net/http"
+	"strings"
 )
 
 type AIHandler struct {
@@ -30,6 +32,12 @@ func (h *AIHandler) GenerateContent(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if err == service.ErrGeminiNotConfigured {
 			ErrJSON(w, http.StatusServiceUnavailable, "AI not configured")
+			return
+		}
+		msg := err.Error()
+		slog.Error("generate-content failed", "error", msg)
+		if strings.Contains(msg, "gemini api") {
+			ErrJSON(w, http.StatusBadGateway, msg)
 			return
 		}
 		ErrJSON(w, http.StatusInternalServerError, "generation failed")
