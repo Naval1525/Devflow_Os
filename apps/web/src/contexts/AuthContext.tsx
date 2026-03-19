@@ -22,7 +22,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
     if (!res.ok) {
       const data = await res.json().catch(() => ({}))
-      throw new Error(data.error || "Login failed")
+      const message = res.status === 403 ? "Access denied" : (data.error || "Login failed")
+      throw new Error(message)
     }
     const data = await res.json()
     const t = data.token

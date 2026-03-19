@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -36,14 +36,14 @@ export function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-sm border-border bg-card">
-        <CardHeader className="space-y-1">
-          <CardTitle className="font-display text-2xl">Sign in</CardTitle>
-          <CardDescription>Enter your email and password</CardDescription>
+    <div className="flex min-h-screen items-center justify-center bg-background p-4 sm:p-6">
+      <Card className="w-full max-w-sm border-border bg-card overflow-hidden">
+        <CardHeader className="space-y-1 p-4 sm:p-6">
+          <CardTitle className="font-display text-xl sm:text-2xl">Sign in</CardTitle>
+          <CardDescription className="text-sm">Enter your email and password</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 p-4 pt-0 sm:p-6 sm:pt-0">
             {error && (
               <p className="text-sm text-destructive">{error}</p>
             )}
@@ -56,6 +56,8 @@ export function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className="min-h-[44px] sm:min-h-[2.5rem] text-base sm:text-sm"
+                autoComplete="email"
               />
             </div>
             <div className="space-y-2">
@@ -66,19 +68,15 @@ export function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                className="min-h-[44px] sm:min-h-[2.5rem] text-base sm:text-sm"
+                autoComplete="current-password"
               />
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full" disabled={loading}>
+          <CardFooter className="flex flex-col gap-4 p-4 pt-0 sm:p-6 sm:pt-0">
+            <Button type="submit" className="w-full min-h-[44px] sm:min-h-0 text-base" disabled={loading}>
               {loading ? "Signing in…" : "Sign in"}
             </Button>
-            <p className="text-center text-sm text-muted-foreground">
-              No account?{" "}
-              <Link to="/signup" className="text-primary hover:underline">
-                Sign up
-              </Link>
-            </p>
           </CardFooter>
         </form>
       </Card>

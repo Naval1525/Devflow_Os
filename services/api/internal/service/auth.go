@@ -11,9 +11,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// AllowedLoginEmail is the only email permitted to log in. Signup is disabled.
+const AllowedLoginEmail = "navalbihani15@gmail.com"
+
 var (
 	ErrInvalidCredentials = errors.New("invalid email or password")
 	ErrEmailExists        = errors.New("email already registered")
+	ErrAccessDenied       = errors.New("access denied")
 )
 
 type AuthService struct {
@@ -65,6 +69,10 @@ func (s *AuthService) Signup(ctx context.Context, email, password string) (*mode
 }
 
 func (s *AuthService) Login(ctx context.Context, email, password string) (string, error) {
+	// Restrict login to allowed email only; validate on backend, do not trust client.
+	if email != AllowedLoginEmail {
+		return "", ErrAccessDenied
+	}
 	u, err := s.userRepo.GetByEmail(ctx, email)
 	if err != nil {
 		return "", ErrInvalidCredentials

@@ -4,7 +4,6 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext"
 import { setOnUnauthorized } from "@/lib/api"
 import { AppLayout } from "@/components/layout/AppLayout"
 import { Login } from "@/pages/Login"
-import { Signup } from "@/pages/Signup"
 import { Dashboard } from "@/pages/Dashboard"
 import { CodingLog } from "@/pages/CodingLog"
 import { Ideas } from "@/pages/Ideas"
@@ -60,14 +59,7 @@ export default function App() {
               </PublicOnlyRoute>
             }
           />
-          <Route
-            path="/signup"
-            element={
-              <PublicOnlyRoute>
-                <Signup />
-              </PublicOnlyRoute>
-            }
-          />
+          <Route path="/signup" element={<Navigate to="/login" replace />} />
           <Route
             path="/"
             element={

@@ -170,12 +170,12 @@ export function Dashboard() {
   if (error && tasks.length === 0) {
     return (
       <div className="space-y-4">
-        <h1 className="font-display text-2xl font-semibold">Dashboard</h1>
-        <p className="text-destructive">{error}</p>
+        <h1 className="font-display text-xl font-semibold sm:text-2xl">Dashboard</h1>
+        <p className="text-sm text-destructive sm:text-base">{error}</p>
         <button
           type="button"
           onClick={() => load()}
-          className="text-sm text-primary hover:underline"
+          className="min-h-[44px] rounded-md px-3 text-sm text-primary hover:underline sm:min-h-0"
         >
           Retry
         </button>
@@ -184,23 +184,25 @@ export function Dashboard() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div>
-        <h1 className="font-display text-2xl font-semibold">Dashboard</h1>
-        <p className="text-muted-foreground">Your personal productivity — tasks and focus</p>
+        <h1 className="font-display text-xl font-semibold sm:text-2xl">Dashboard</h1>
+        <p className="text-sm text-muted-foreground sm:text-base">
+          Your personal productivity — tasks and focus
+        </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
         <Card className="border-border md:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div>
-              <CardTitle className="font-display flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                {formatDisplayDate(selectedDate)}
+          <CardHeader className="flex flex-col gap-3 pb-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+            <div className="min-w-0">
+              <CardTitle className="font-display flex items-center gap-2 text-lg sm:text-base">
+                <Calendar className="h-5 w-5 shrink-0" />
+                <span className="truncate">{formatDisplayDate(selectedDate)}</span>
               </CardTitle>
               <CardDescription>Add and edit tasks for this day</CardDescription>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <Label htmlFor="dashboard-date" className="text-sm text-muted-foreground">
                 Date
               </Label>
@@ -209,22 +211,27 @@ export function Dashboard() {
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-40"
+                className="w-full min-w-0 sm:w-40 min-h-[44px] sm:min-h-[2.5rem]"
               />
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <form onSubmit={addTask} className="flex flex-wrap items-end gap-2">
-              <div className="min-w-[200px] flex-1 space-y-1">
+            <form onSubmit={addTask} className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:gap-2">
+              <div className="min-w-0 flex-1 space-y-1">
                 <Label htmlFor="new-task-title">New task</Label>
                 <Input
                   id="new-task-title"
                   placeholder="e.g. Coding, Call mom, Review PR"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
+                  className="min-h-[44px] sm:min-h-[2.5rem]"
                 />
               </div>
-              <Button type="submit" disabled={adding || !newTitle.trim()}>
+              <Button
+                type="submit"
+                disabled={adding || !newTitle.trim()}
+                className="min-h-[44px] w-full sm:min-h-0 sm:w-auto"
+              >
                 <Plus className="h-4 w-4" />
                 Add
               </Button>
@@ -239,37 +246,42 @@ export function Dashboard() {
               {tasks.map((task) => (
                 <li
                   key={task.id}
-                  className="flex items-center gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:bg-accent/20"
+                  className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card p-3 transition-colors hover:bg-accent/20 sm:gap-3"
                 >
                   <Checkbox
                     checked={task.completed}
                     onCheckedChange={() => toggleTask(task)}
                     aria-label={`Mark ${task.type} complete`}
+                    className="mt-0.5"
                   />
                   {editingId === task.id ? (
-                    <form onSubmit={saveEdit} className="flex flex-1 flex-wrap items-center gap-2">
+                    <form onSubmit={saveEdit} className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
                       <Input
                         value={editTitle}
                         onChange={(e) => setEditTitle(e.target.value)}
                         placeholder="Task title"
-                        className="min-w-[120px] flex-1"
+                        className="min-w-[120px] flex-1 min-h-[44px] sm:min-h-[2.5rem]"
                         autoFocus
                       />
                       <Input
                         type="date"
                         value={editDate}
                         onChange={(e) => setEditDate(e.target.value)}
-                        className="w-40"
+                        className="w-full min-w-0 sm:w-40 min-h-[44px] sm:min-h-[2.5rem]"
                       />
-                      <Button type="submit" size="sm">Save</Button>
-                      <Button type="button" size="sm" variant="ghost" onClick={cancelEdit}>
-                        Cancel
-                      </Button>
+                      <div className="flex gap-1 w-full sm:w-auto">
+                        <Button type="submit" size="sm" className="min-h-[44px] flex-1 sm:min-h-0 sm:flex-none">
+                          Save
+                        </Button>
+                        <Button type="button" size="sm" variant="ghost" onClick={cancelEdit} className="min-h-[44px] sm:min-h-0">
+                          Cancel
+                        </Button>
+                      </div>
                     </form>
                   ) : (
                     <>
                       <span
-                        className={`min-w-0 flex-1 text-sm font-medium ${task.completed ? "text-muted-foreground line-through" : ""}`}
+                        className={`min-w-0 flex-1 text-sm font-medium break-words ${task.completed ? "text-muted-foreground line-through" : ""}`}
                       >
                         {task.type}
                       </span>
@@ -278,7 +290,7 @@ export function Dashboard() {
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
+                          className="h-9 w-9 min-h-[44px] min-w-[44px] sm:h-8 sm:w-8 sm:min-h-0 sm:min-w-0"
                           onClick={() => startEdit(task)}
                           aria-label="Edit task"
                         >
@@ -288,7 +300,7 @@ export function Dashboard() {
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          className="h-9 w-9 min-h-[44px] min-w-[44px] text-destructive hover:text-destructive sm:h-8 sm:w-8 sm:min-h-0 sm:min-w-0"
                           onClick={() => deleteTask(task.id)}
                           aria-label="Delete task"
                         >
@@ -304,21 +316,21 @@ export function Dashboard() {
         </Card>
 
         <Card className="border-border">
-          <CardHeader>
-            <CardTitle className="font-display">Deep work</CardTitle>
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="font-display text-base sm:text-base">Deep work</CardTitle>
             <CardDescription>Start or stop a focus session</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
             {activeSession ? (
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-3">
                 <p className="text-sm text-muted-foreground">Session in progress</p>
-                <Button size="sm" variant="destructive" onClick={endSession}>
+                <Button size="sm" variant="destructive" onClick={endSession} className="min-h-[44px] sm:min-h-0">
                   <Square className="h-4 w-4" />
                   Stop
                 </Button>
               </div>
             ) : (
-              <Button onClick={startSession}>
+              <Button onClick={startSession} className="min-h-[44px] w-full sm:min-h-0 sm:w-auto">
                 <Play className="h-4 w-4" />
                 Start session
               </Button>
@@ -327,11 +339,11 @@ export function Dashboard() {
         </Card>
 
         <Card className="border-border">
-          <CardHeader>
-            <CardTitle className="font-display">Quick links</CardTitle>
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="font-display text-base sm:text-base">Quick links</CardTitle>
             <CardDescription>Ideas, LeetCode, content, finances</CardDescription>
           </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
+          <CardContent className="p-4 pt-0 text-sm text-muted-foreground sm:p-6 sm:pt-0">
             Use the sidebar to open Ideas, LeetCode log, AI Generator, Opportunities, and Finance.
           </CardContent>
         </Card>

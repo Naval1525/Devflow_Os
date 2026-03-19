@@ -21,19 +21,48 @@ const nav = [
   { to: "/ai", label: "AI Generator", icon: Sparkles },
 ]
 
-export function AppSidebar() {
+type AppSidebarProps = {
+  open?: boolean
+  onClose?: () => void
+  mobile?: boolean
+  className?: string
+}
+
+export function AppSidebar({ open = true, onClose, mobile, className }: AppSidebarProps) {
   const location = useLocation()
 
   return (
-    <aside className="flex h-full w-56 flex-col border-r border-border bg-card/50">
-      <div className="p-4">
-        <h1 className="font-display text-lg font-semibold text-foreground">
-          DevFlow OS
-        </h1>
-        <p className="text-xs text-muted-foreground">Control center</p>
+    <aside
+      className={cn(
+        "flex h-full flex-col border-r border-border bg-card/50",
+        "w-56 shrink-0",
+        mobile && [
+          "fixed left-0 top-0 z-50 h-full w-64 max-w-[85vw] transform transition-transform duration-200 ease-out",
+          open ? "translate-x-0" : "-translate-x-full",
+        ],
+        className
+      )}
+    >
+      <div className="flex items-center justify-between p-4">
+        <div>
+          <h1 className="font-display text-lg font-semibold text-foreground">
+            DevFlow OS
+          </h1>
+          <p className="text-xs text-muted-foreground">Control center</p>
+        </div>
+        {mobile && onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-2 text-muted-foreground hover:bg-accent/50 hover:text-foreground min-h-[44px] min-w-[44px] flex items-center justify-center -mr-2"
+            aria-label="Close menu"
+          >
+            <span className="text-lg font-medium">×</span>
+          </button>
+        )}
       </div>
       <Separator />
-      <nav className="flex-1 space-y-0.5 p-2">
+      <nav className="flex-1 space-y-0.5 overflow-y-auto p-2">
         {nav.map((item) => {
           const Icon = item.icon
           const isActive = location.pathname === item.to
@@ -41,14 +70,15 @@ export function AppSidebar() {
             <Link
               key={item.to}
               to={item.to}
+              onClick={mobile ? onClose : undefined}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors min-h-[44px] sm:min-h-0 sm:py-2",
                 isActive
                   ? "bg-primary/10 text-primary"
                   : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground"
               )}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="h-4 w-4 shrink-0" />
               {item.label}
             </Link>
           )

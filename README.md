@@ -86,4 +86,7 @@ Web runs at `http://localhost:5173` by default.
 | `PORT`         | API     | HTTP port (default 8080)       |
 | `CORS_ORIGINS` | API     | Allowed origins (default *)    |
 | `VITE_API_URL` | Web     | API base URL (default http://localhost:8080) |
-# Devflow_Os
+
+### Deploy backend to Render
+
+See **[docs/DEPLOY_RENDER.md](docs/DEPLOY_RENDER.md)** for a step-by-step guide to deploy only the Go API to Render. A `render.yaml` blueprint is included in the repo root.

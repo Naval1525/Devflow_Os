@@ -53,4 +53,19 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
+  /* Prevent horizontal scroll on small devices */
+  html,
+  body {
+    overflow-x: hidden;
+    min-width: 0;
+  }
+  /* Readable base font size on mobile; scale up on larger screens */
+  html {
+    font-size: 16px;
+  }
+  @media (min-width: 768px) {
+    html {
+      font-size: 16px;
+    }
+  }
 }
