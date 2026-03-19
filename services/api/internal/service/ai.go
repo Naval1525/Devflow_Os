@@ -49,9 +49,10 @@ type GenerateContentInput struct {
 }
 
 type GenerateContentOutput struct {
-	Tweet      string `json:"tweet,omitempty"`
-	ReelScript string `json:"reel_script,omitempty"`
-	Hook       string `json:"hook,omitempty"`
+	Tweet       string `json:"tweet,omitempty"`
+	ReelScript  string `json:"reel_script,omitempty"`
+	Hook        string `json:"hook,omitempty"`
+	LinkedinPost string `json:"linkedin_post,omitempty"`
 }
 
 func (s *AIContentService) Generate(ctx context.Context, input GenerateContentInput) (*GenerateContentOutput, error) {
@@ -127,11 +128,12 @@ func buildSystemPrompt(formats []string) string {
 	return `You are a dev creator content assistant. Turn the user's input (coding notes, LeetCode solutions, ideas) into ready-to-post content.
 
 Rules:
-1. Output ONLY the requested formats. Use exactly these labels on their own line: TWEET:, REEL SCRIPT:, HOOK:
+1. Output ONLY the requested formats. Use exactly these labels on their own line: TWEET:, REEL SCRIPT:, HOOK:, LINKEDIN POST:
 2. Tweet: under 280 characters, engaging, 1-2 relevant hashtags (e.g. #Coding #LeetCode).
 3. Hook: one punchy line only. No hashtags.
 4. Reel script: 3-5 numbered steps. Each step: number, then (brief visual/action in parentheses), then the line in quotes. Example: 1. (Confused look) "Got you stuck?" 2. (Lightbulb) "Here's the fix:"
-5. Be concise and actionable. No filler.`
+5. LinkedIn post: professional tone, 1-3 short paragraphs, optional 2-4 hashtags at the end. Suitable for LinkedIn.
+6. Be concise and actionable. No filler.`
 }
 
 func buildUserPrompt(text string, formats []string) string {
@@ -147,6 +149,8 @@ func buildUserPrompt(text string, formats []string) string {
 			want = append(want, "REEL SCRIPT")
 		case "hook":
 			want = append(want, "HOOK")
+		case "linkedin_post":
+			want = append(want, "LINKEDIN POST")
 		}
 	}
 	if len(want) == 0 {
@@ -169,6 +173,8 @@ func parseGeneratedText(text string, _ []string) *GenerateContentOutput {
 			out.ReelScript = s
 		case "hook":
 			out.Hook = s
+		case "linkedin_post":
+			out.LinkedinPost = s
 		}
 		current = nil
 	}
@@ -187,12 +193,16 @@ func parseGeneratedText(text string, _ []string) *GenerateContentOutput {
 			flush()
 			currentKey = "hook"
 			current = []string{strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(line, "HOOK:"), "hook:"))}
+		} else if strings.HasPrefix(upper, "LINKEDIN POST:") {
+			flush()
+			currentKey = "linkedin_post"
+			current = []string{strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(line, "LINKEDIN POST:"), "linkedin post:"))}
 		} else if currentKey != "" && line != "" {
 			current = append(current, line)
 		}
 	}
 	flush()
-	if out.Tweet == "" && out.ReelScript == "" && out.Hook == "" {
+	if out.Tweet == "" && out.ReelScript == "" && out.Hook == "" && out.LinkedinPost == "" {
 		out.Tweet = strings.TrimSpace(text)
 	}
 	return out

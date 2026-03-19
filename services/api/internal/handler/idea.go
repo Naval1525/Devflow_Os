@@ -119,6 +119,8 @@ func parseIdeaType(s string) model.IdeaType {
 		return model.IdeaTypeReel
 	case "thread":
 		return model.IdeaTypeThread
+	case "linkedin":
+		return model.IdeaTypeLinkedin
 	default:
 		return model.IdeaTypeTweet
 	}

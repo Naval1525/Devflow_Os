@@ -16,7 +16,7 @@ type Idea = {
   created_at: string
 }
 
-const IDEA_TYPES = ["tweet", "reel", "thread"] as const
+const IDEA_TYPES = ["tweet", "reel", "thread", "linkedin"] as const
 const IDEA_STATUSES = ["idea", "ready", "posted"] as const
 
 export function Ideas() {

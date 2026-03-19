@@ -85,6 +85,11 @@ func (h *TaskHandler) Update(w http.ResponseWriter, r *http.Request) {
 		ErrJSON(w, http.StatusBadRequest, "invalid task id")
 		return
 	}
+	cur, err := h.task.GetByID(r.Context(), userID, taskID)
+	if err != nil || cur == nil {
+		ErrJSON(w, http.StatusNotFound, "task not found")
+		return
+	}
 	var req struct {
 		Title     string `json:"title"`
 		Date      string `json:"date"`
@@ -94,24 +99,7 @@ func (h *TaskHandler) Update(w http.ResponseWriter, r *http.Request) {
 		ErrJSON(w, http.StatusBadRequest, "invalid body")
 		return
 	}
-	tasks, _ := h.task.GetByDate(r.Context(), userID, "")
-	var title, date string
-	var completed bool
-	for _, t := range tasks {
-		if t.ID == taskID {
-			title, date, completed = string(t.Type), t.Date, t.Completed
-			break
-		}
-	}
-	if title == "" && date == "" {
-		tasksAll, _ := h.task.GetToday(r.Context(), userID)
-		for _, t := range tasksAll {
-			if t.ID == taskID {
-				title, date, completed = string(t.Type), t.Date, t.Completed
-				break
-			}
-		}
-	}
+	title, date, completed := string(cur.Type), cur.Date, cur.Completed
 	if req.Title != "" {
 		title = req.Title
 	}
@@ -120,9 +108,6 @@ func (h *TaskHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.Completed != nil {
 		completed = *req.Completed
-	}
-	if date == "" {
-		date = tasks[0].Date
 	}
 	task, err := h.task.Update(r.Context(), userID, taskID, title, date, completed)
 	if err != nil {

@@ -11,6 +11,7 @@ type GeneratedContent = {
   tweet?: string
   reel_script?: string
   hook?: string
+  linkedin_post?: string
 }
 
 type LeetCodeLog = {
@@ -79,12 +80,13 @@ export function AIGenerator() {
   const [wantTweet, setWantTweet] = useState(true)
   const [wantReel, setWantReel] = useState(true)
   const [wantHook, setWantHook] = useState(true)
+  const [wantLinkedin, setWantLinkedin] = useState(false)
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<GeneratedContent | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [copiedField, setCopiedField] = useState<"tweet" | "hook" | "reel_script" | null>(null)
+  const [copiedField, setCopiedField] = useState<"tweet" | "hook" | "reel_script" | "linkedin_post" | null>(null)
 
-  async function copyToClipboard(text: string, field: "tweet" | "hook" | "reel_script") {
+  async function copyToClipboard(text: string, field: "tweet" | "hook" | "reel_script" | "linkedin_post") {
     try {
       await navigator.clipboard.writeText(text)
       setCopiedField(field)
@@ -189,6 +191,7 @@ export function AIGenerator() {
     if (wantTweet) formats.push("tweet")
     if (wantReel) formats.push("reel_script")
     if (wantHook) formats.push("hook")
+    if (wantLinkedin) formats.push("linkedin_post")
     if (formats.length === 0) formats.push("tweet", "reel_script", "hook")
     try {
       const res = await apiFetch("/generate-content", {
@@ -225,7 +228,7 @@ export function AIGenerator() {
       <div>
         <h1 className="font-display text-2xl font-semibold">AI Content Generator</h1>
         <p className="text-muted-foreground">
-          Generate tweet, reel script, or hook from what you’ve done — coding log, LeetCode, ideas, or custom text
+          Generate tweet, reel script, or hook from what you’ve done — coding log, LeetCode, ideas, or custom text (including LinkedIn post)
         </p>
       </div>
 
@@ -366,6 +369,10 @@ export function AIGenerator() {
               <Checkbox checked={wantHook} onCheckedChange={(c) => setWantHook(!!c)} />
               <span className="text-sm">Hook</span>
             </label>
+            <label className="flex items-center gap-2">
+              <Checkbox checked={wantLinkedin} onCheckedChange={(c) => setWantLinkedin(!!c)} />
+              <span className="text-sm">LinkedIn post</span>
+            </label>
           </div>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
@@ -376,7 +383,7 @@ export function AIGenerator() {
         </CardContent>
       </Card>
 
-      {result && (result.tweet || result.reel_script || result.hook) && (
+      {result && (result.tweet || result.reel_script || result.hook || result.linkedin_post) && (
         <Card className="border-border">
           <CardHeader>
             <CardTitle className="font-display">Generated content</CardTitle>
@@ -436,6 +443,22 @@ export function AIGenerator() {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+            {result.linkedin_post && (
+              <div className="rounded-lg border border-border bg-card p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">LinkedIn post</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    onClick={() => copyToClipboard(result.linkedin_post!, "linkedin_post")}
+                  >
+                    {copiedField === "linkedin_post" ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+                <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">{result.linkedin_post}</p>
               </div>
             )}
           </CardContent>

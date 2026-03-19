@@ -81,7 +81,10 @@ func main() {
 	r.Route("/", func(r chi.Router) {
 		r.Use(middleware.Auth(authSvc))
 		r.Get("/tasks/today", taskH.GetToday)
-		r.Post("/tasks/update", taskH.Update)
+		r.Get("/tasks", taskH.GetByDate)
+		r.Post("/tasks", taskH.Create)
+		r.Patch("/tasks/{id}", taskH.Update)
+		r.Delete("/tasks/{id}", taskH.Delete)
 		r.Post("/ideas", ideaH.Create)
 		r.Get("/ideas", ideaH.List)
 		r.Patch("/ideas/{id}", ideaH.Update)

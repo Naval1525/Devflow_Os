@@ -18,8 +18,9 @@ type TaskService struct {
 type TaskRepository interface {
 	GetByDate(ctx context.Context, userID uuid.UUID, date string) ([]*model.Task, error)
 	Create(ctx context.Context, userID uuid.UUID, title string, date string) (*model.Task, error)
-	UpdateByID(ctx context.Context, userID uuid.UUID, taskID uuid.UUID, title string, date string, completed bool) error
+	UpdateByID(ctx context.Context, userID uuid.UUID, taskID uuid.UUID, title string, date string, completed bool) (*model.Task, error)
 	DeleteByID(ctx context.Context, userID uuid.UUID, taskID uuid.UUID) error
+	GetByID(ctx context.Context, userID uuid.UUID, taskID uuid.UUID) (*model.Task, error)
 }
 
 func NewTaskService(taskRepo TaskRepository) *TaskService {
@@ -36,6 +37,10 @@ func (s *TaskService) GetByDate(ctx context.Context, userID uuid.UUID, date stri
 		date = time.Now().UTC().Format("2006-01-02")
 	}
 	return s.taskRepo.GetByDate(ctx, userID, date)
+}
+
+func (s *TaskService) GetByID(ctx context.Context, userID uuid.UUID, taskID uuid.UUID) (*model.Task, error) {
+	return s.taskRepo.GetByID(ctx, userID, taskID)
 }
 
 func (s *TaskService) Create(ctx context.Context, userID uuid.UUID, title string, date string) (*model.Task, error) {

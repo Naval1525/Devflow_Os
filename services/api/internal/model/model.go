@@ -34,9 +34,10 @@ type IdeaType string
 type IdeaStatus string
 
 const (
-	IdeaTypeReel   IdeaType = "reel"
-	IdeaTypeTweet  IdeaType = "tweet"
-	IdeaTypeThread IdeaType = "thread"
+	IdeaTypeReel     IdeaType = "reel"
+	IdeaTypeTweet    IdeaType = "tweet"
+	IdeaTypeThread   IdeaType = "thread"
+	IdeaTypeLinkedin IdeaType = "linkedin"
 
 	IdeaStatusIdea   IdeaStatus = "idea"
 	IdeaStatusReady  IdeaStatus = "ready"

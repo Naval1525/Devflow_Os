@@ -2,14 +2,17 @@ import { useEffect, useState } from "react"
 import { apiFetch } from "@/lib/api"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Play, Square } from "lucide-react"
+import { Play, Square, Plus, Pencil, Trash2, Calendar } from "lucide-react"
 
 type Task = {
   id: string
   type: string
   date: string
   completed: boolean
+  created_at?: string
 }
 
 type Session = {
@@ -18,44 +21,132 @@ type Session = {
   end_time: string | null
 }
 
+function formatDisplayDate(iso: string): string {
+  if (!iso) return ""
+  const d = new Date(iso + "T12:00:00")
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const dNorm = new Date(d)
+  dNorm.setHours(0, 0, 0, 0)
+  if (dNorm.getTime() === today.getTime()) return "Today"
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+  if (dNorm.getTime() === yesterday.getTime()) return "Yesterday"
+  return d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })
+}
+
+function toISODate(d: Date): string {
+  return d.toISOString().slice(0, 10)
+}
+
 export function Dashboard() {
   const [tasks, setTasks] = useState<Task[]>([])
+  const [selectedDate, setSelectedDate] = useState<string>(() => toISODate(new Date()))
   const [activeSession, setActiveSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [newTitle, setNewTitle] = useState("")
+  const [adding, setAdding] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editTitle, setEditTitle] = useState("")
+  const [editDate, setEditDate] = useState("")
 
-  async function load() {
+  async function loadTasks() {
     setError(null)
     try {
-      const [tasksRes, sessionRes] = await Promise.all([
-        apiFetch("/tasks/today"),
-        apiFetch("/sessions/active"),
-      ])
-      if (tasksRes.ok) {
-        const data = await tasksRes.json()
+      const url = selectedDate ? `/tasks?date=${selectedDate}` : "/tasks/today"
+      const res = await apiFetch(url)
+      if (res.ok) {
+        const data = await res.json()
         setTasks(data.tasks ?? [])
       }
-      if (sessionRes.ok) {
-        const data = await sessionRes.json()
-        setActiveSession(data)
-      }
     } catch {
-      setError("Failed to load dashboard")
+      setError("Failed to load tasks")
     } finally {
       setLoading(false)
     }
   }
 
+  async function loadSession() {
+    try {
+      const res = await apiFetch("/sessions/active")
+      if (res.ok) {
+        const data = await res.json()
+        setActiveSession(data)
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  function load() {
+    setLoading(true)
+    loadTasks()
+    loadSession()
+  }
+
   useEffect(() => {
     load()
-  }, [])
+  }, [selectedDate])
 
-  async function toggleTask(type: string, completed: boolean) {
-    const res = await apiFetch("/tasks/update", {
-      method: "POST",
-      body: JSON.stringify({ type, completed }),
+  async function toggleTask(task: Task) {
+    const res = await apiFetch(`/tasks/${task.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ completed: !task.completed }),
     })
-    if (res.ok) load()
+    if (res.ok) loadTasks()
+  }
+
+  async function addTask(e: React.FormEvent) {
+    e.preventDefault()
+    const title = newTitle.trim()
+    if (!title) return
+    setAdding(true)
+    try {
+      const res = await apiFetch("/tasks", {
+        method: "POST",
+        body: JSON.stringify({ title, date: selectedDate || toISODate(new Date()) }),
+      })
+      if (res.ok) {
+        setNewTitle("")
+        loadTasks()
+      }
+    } finally {
+      setAdding(false)
+    }
+  }
+
+  function startEdit(task: Task) {
+    setEditingId(task.id)
+    setEditTitle(task.type)
+    setEditDate(task.date)
+  }
+
+  function cancelEdit() {
+    setEditingId(null)
+    setEditTitle("")
+    setEditDate("")
+  }
+
+  async function saveEdit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!editingId) return
+    const title = editTitle.trim()
+    if (!title) return
+    const res = await apiFetch(`/tasks/${editingId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ title, date: editDate || selectedDate }),
+    })
+    if (res.ok) {
+      cancelEdit()
+      loadTasks()
+    }
+  }
+
+  async function deleteTask(id: string) {
+    if (!confirm("Delete this task?")) return
+    const res = await apiFetch(`/tasks/${id}`, { method: "DELETE" })
+    if (res.ok) loadTasks()
   }
 
   async function startSession() {
@@ -68,16 +159,7 @@ export function Dashboard() {
     if (res.ok) load()
   }
 
-  const labels: Record<string, string> = {
-    coding: "Coding",
-    leetcode: "LeetCode",
-    content: "Content",
-  }
-
-  const defaultTaskTypes = ["coding", "leetcode", "content"] as const
-  const tasksToShow = defaultTaskTypes.map((type) => tasks.find((t) => t.type === type) ?? { id: type, type, date: "", completed: false })
-
-  if (loading) {
+  if (loading && tasks.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
         <p className="text-muted-foreground">Loading…</p>
@@ -85,7 +167,7 @@ export function Dashboard() {
     )
   }
 
-  if (error) {
+  if (error && tasks.length === 0) {
     return (
       <div className="space-y-4">
         <h1 className="font-display text-2xl font-semibold">Dashboard</h1>
@@ -105,32 +187,119 @@ export function Dashboard() {
     <div className="space-y-8">
       <div>
         <h1 className="font-display text-2xl font-semibold">Dashboard</h1>
-        <p className="text-muted-foreground">Today&apos;s checklist and focus</p>
+        <p className="text-muted-foreground">Your personal productivity — tasks and focus</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <Card className="border-border">
-          <CardHeader>
-            <CardTitle className="font-display">Today&apos;s checklist</CardTitle>
-            <CardDescription>Mark done as you go</CardDescription>
+        <Card className="border-border md:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div>
+              <CardTitle className="font-display flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                {formatDisplayDate(selectedDate)}
+              </CardTitle>
+              <CardDescription>Add and edit tasks for this day</CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="dashboard-date" className="text-sm text-muted-foreground">
+                Date
+              </Label>
+              <Input
+                id="dashboard-date"
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-40"
+              />
+            </div>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {tasksToShow.map((task) => (
-              <label
-                key={task.id}
-                className="flex cursor-pointer items-center gap-3 rounded-lg border border-border p-3 transition-colors hover:bg-accent/30"
-              >
-                <Checkbox
-                  checked={task.completed}
-                  onCheckedChange={(checked) =>
-                    toggleTask(task.type, !!checked)
-                  }
+          <CardContent className="space-y-4">
+            <form onSubmit={addTask} className="flex flex-wrap items-end gap-2">
+              <div className="min-w-[200px] flex-1 space-y-1">
+                <Label htmlFor="new-task-title">New task</Label>
+                <Input
+                  id="new-task-title"
+                  placeholder="e.g. Coding, Call mom, Review PR"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
                 />
-                <span className="text-sm font-medium">
-                  {labels[task.type] ?? task.type}
-                </span>
-              </label>
-            ))}
+              </div>
+              <Button type="submit" disabled={adding || !newTitle.trim()}>
+                <Plus className="h-4 w-4" />
+                Add
+              </Button>
+            </form>
+
+            <ul className="space-y-2">
+              {tasks.length === 0 && (
+                <li className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+                  No tasks for this day. Add one above.
+                </li>
+              )}
+              {tasks.map((task) => (
+                <li
+                  key={task.id}
+                  className="flex items-center gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:bg-accent/20"
+                >
+                  <Checkbox
+                    checked={task.completed}
+                    onCheckedChange={() => toggleTask(task)}
+                    aria-label={`Mark ${task.type} complete`}
+                  />
+                  {editingId === task.id ? (
+                    <form onSubmit={saveEdit} className="flex flex-1 flex-wrap items-center gap-2">
+                      <Input
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        placeholder="Task title"
+                        className="min-w-[120px] flex-1"
+                        autoFocus
+                      />
+                      <Input
+                        type="date"
+                        value={editDate}
+                        onChange={(e) => setEditDate(e.target.value)}
+                        className="w-40"
+                      />
+                      <Button type="submit" size="sm">Save</Button>
+                      <Button type="button" size="sm" variant="ghost" onClick={cancelEdit}>
+                        Cancel
+                      </Button>
+                    </form>
+                  ) : (
+                    <>
+                      <span
+                        className={`min-w-0 flex-1 text-sm font-medium ${task.completed ? "text-muted-foreground line-through" : ""}`}
+                      >
+                        {task.type}
+                      </span>
+                      <div className="flex shrink-0 gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => startEdit(task)}
+                          aria-label="Edit task"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => deleteTask(task.id)}
+                          aria-label="Delete task"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </li>
+              ))}
+            </ul>
           </CardContent>
         </Card>
 
@@ -154,6 +323,16 @@ export function Dashboard() {
                 Start session
               </Button>
             )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle className="font-display">Quick links</CardTitle>
+            <CardDescription>Ideas, LeetCode, content, finances</CardDescription>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            Use the sidebar to open Ideas, LeetCode log, AI Generator, Opportunities, and Finance.
           </CardContent>
         </Card>
       </div>
