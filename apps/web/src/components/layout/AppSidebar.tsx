@@ -9,8 +9,6 @@ import {
   Wallet,
   Sparkles,
 } from "lucide-react"
-import { Separator } from "@/components/ui/separator"
-
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/coding-log", label: "Coding log", icon: Terminal },
@@ -43,25 +41,25 @@ export function AppSidebar({ open = true, onClose, mobile, className }: AppSideb
         className
       )}
     >
-      <div className="flex items-center justify-between p-4">
-        <div>
-          <h1 className="font-display text-lg font-semibold text-foreground">
+      {/* Same height + border as AppLayout main header so the divider is one continuous line */}
+      <div className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border px-4">
+        <div className="min-w-0 flex flex-col justify-center gap-0.5 leading-tight">
+          <h1 className="font-display truncate text-base font-semibold text-foreground sm:text-lg">
             DevFlow OS
           </h1>
-          <p className="text-xs text-muted-foreground">Control center</p>
+          <p className="truncate text-[11px] text-muted-foreground sm:text-xs">Control center</p>
         </div>
         {mobile && onClose && (
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-muted-foreground hover:bg-accent/50 hover:text-foreground min-h-[44px] min-w-[44px] flex items-center justify-center -mr-2"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent/50 hover:text-foreground min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
             aria-label="Close menu"
           >
-            <span className="text-lg font-medium">×</span>
+            <span className="text-lg font-medium leading-none">×</span>
           </button>
         )}
       </div>
-      <Separator />
       <nav className="flex-1 space-y-0.5 overflow-y-auto p-2">
         {nav.map((item) => {
           const Icon = item.icon
