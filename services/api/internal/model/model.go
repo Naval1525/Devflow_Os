@@ -22,12 +22,12 @@ const (
 )
 
 type Task struct {
-	ID         uuid.UUID `json:"id"`
-	UserID     uuid.UUID `json:"user_id"`
-	Type       TaskType `json:"type"`
-	Date       string   `json:"date"`
-	Completed  bool     `json:"completed"`
-	CreatedAt  time.Time `json:"created_at"`
+	ID        uuid.UUID `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
+	Type      TaskType  `json:"type"`
+	Date      string    `json:"date"`
+	Completed bool      `json:"completed"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type IdeaType string
@@ -63,14 +63,14 @@ const (
 )
 
 type LeetCodeLog struct {
-	ID           uuid.UUID  `json:"id"`
-	UserID       uuid.UUID  `json:"user_id"`
-	ProblemName  string     `json:"problem_name"`
-	Difficulty   Difficulty `json:"difficulty"`
-	Approach     string     `json:"approach"`
-	Mistake      string     `json:"mistake"`
-	TimeTaken    *int       `json:"time_taken"`
-	CreatedAt    time.Time  `json:"created_at"`
+	ID          uuid.UUID  `json:"id"`
+	UserID      uuid.UUID  `json:"user_id"`
+	ProblemName string     `json:"problem_name"`
+	Difficulty  Difficulty `json:"difficulty"`
+	Approach    string     `json:"approach"`
+	Mistake     string     `json:"mistake"`
+	TimeTaken   *int       `json:"time_taken"`
+	CreatedAt   time.Time  `json:"created_at"`
 }
 
 type CodingLog struct {
@@ -92,7 +92,7 @@ type OpportunityType string
 type OpportunityStage string
 
 const (
-	OppTypeJob      OpportunityType = "job"
+	OppTypeJob       OpportunityType = "job"
 	OppTypeFreelance OpportunityType = "freelance"
 
 	OppStageApplied   OpportunityStage = "applied"
@@ -101,22 +101,23 @@ const (
 )
 
 type Opportunity struct {
-	ID        uuid.UUID         `json:"id"`
-	UserID    uuid.UUID         `json:"user_id"`
-	Name      string            `json:"name"`
-	Type      OpportunityType   `json:"type"`
-	Stage     OpportunityStage  `json:"stage"`
-	Source    string            `json:"source"`
-	Notes     string            `json:"notes"`
-	CreatedAt time.Time         `json:"created_at"`
+	ID        uuid.UUID        `json:"id"`
+	UserID    uuid.UUID        `json:"user_id"`
+	Name      string           `json:"name"`
+	Type      OpportunityType  `json:"type"`
+	Stage     OpportunityStage `json:"stage"`
+	Source    string           `json:"source"`
+	Notes     string           `json:"notes"`
+	CreatedAt time.Time        `json:"created_at"`
 }
 
 type FinanceType string
 
 const (
-	FinanceSalary   FinanceType = "salary"
+	FinanceSalary    FinanceType = "salary"
 	FinanceFreelance FinanceType = "freelance"
-	FinanceOther    FinanceType = "other"
+	FinanceOther     FinanceType = "other"
+	FinanceSpend     FinanceType = "spend"
 )
 
 type Finance struct {

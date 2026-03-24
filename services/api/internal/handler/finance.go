@@ -89,6 +89,8 @@ func parseFinanceType(s string) model.FinanceType {
 	switch s {
 	case "freelance":
 		return model.FinanceFreelance
+	case "spend":
+		return model.FinanceSpend
 	case "other":
 		return model.FinanceOther
 	default:

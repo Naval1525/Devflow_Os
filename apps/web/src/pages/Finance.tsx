@@ -16,7 +16,7 @@ type FinanceEntry = {
   created_at: string
 }
 
-const FINANCE_TYPES = ["salary", "freelance", "other"] as const
+const FINANCE_TYPES = ["salary", "freelance", "spend", "other"] as const
 const ENTRY_FILTERS = ["all", "income", "expense"] as const
 type EntryFilter = (typeof ENTRY_FILTERS)[number]
 
@@ -30,7 +30,7 @@ function parseDate(s: string) {
 }
 
 function isExpenseType(type: string) {
-  return type === "other"
+  return type === "other" || type === "spend"
 }
 
 export function Finance() {
@@ -107,16 +107,17 @@ export function Finance() {
     `₹${n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
   const filteredEntries = entries.filter((entry) => {
+    const isExpense = isExpenseType(entry.type) || entry.amount < 0
     if (entryFilter === "all") return true
-    if (entryFilter === "expense") return isExpenseType(entry.type)
-    return !isExpenseType(entry.type)
+    if (entryFilter === "expense") return isExpense
+    return !isExpense
   })
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="font-display text-2xl font-semibold">Finance</h1>
-        <p className="text-muted-foreground">Track income in rupees and compare months</p>
+        <p className="text-muted-foreground">Track income and spending in rupees and compare months</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -169,7 +170,7 @@ export function Finance() {
       <Card className="border-border">
         <CardHeader>
           <CardTitle className="font-display">Entries</CardTitle>
-          <CardDescription>Recent income entries</CardDescription>
+          <CardDescription>Recent finance entries</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="mb-4 max-w-[220px] space-y-2">
@@ -193,7 +194,7 @@ export function Finance() {
               {filteredEntries.map((e) => (
                 <li key={e.id} className="flex items-center justify-between rounded-lg border border-border p-3">
                   <div>
-                    <p className={`font-medium ${isExpenseType(e.type) ? "text-red-600" : "text-green-600"}`}>
+                    <p className={`font-medium ${isExpenseType(e.type) || e.amount < 0 ? "text-red-600" : "text-green-600"}`}>
                       {formatRupees(e.amount)} · {e.type}
                     </p>
                     <p className="text-sm text-muted-foreground">{e.date}{e.note ? ` · ${e.note}` : ""}</p>
