@@ -114,10 +114,11 @@ type Opportunity struct {
 type FinanceType string
 
 const (
-	FinanceSalary    FinanceType = "salary"
-	FinanceFreelance FinanceType = "freelance"
-	FinanceOther     FinanceType = "other"
-	FinanceSpend     FinanceType = "spend"
+	FinanceSalary          FinanceType = "salary"
+	FinanceFreelance       FinanceType = "freelance"
+	FinanceInstaPaidCollab FinanceType = "insta_paid_collab"
+	FinanceOther           FinanceType = "other"
+	FinanceSpend           FinanceType = "spend"
 )
 
 type Finance struct {

@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS finances (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   amount     NUMERIC(12,2) NOT NULL,
-  "type"     TEXT NOT NULL CHECK ("type" IN ('salary', 'freelance', 'other')),
+  "type"     TEXT NOT NULL CHECK ("type" IN ('salary', 'freelance', 'insta_paid_collab', 'other', 'spend')),
   note       TEXT,
   date       DATE NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()

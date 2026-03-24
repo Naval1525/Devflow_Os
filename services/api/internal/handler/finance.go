@@ -89,6 +89,8 @@ func parseFinanceType(s string) model.FinanceType {
 	switch s {
 	case "freelance":
 		return model.FinanceFreelance
+	case "insta_paid_collab":
+		return model.FinanceInstaPaidCollab
 	case "spend":
 		return model.FinanceSpend
 	case "other":

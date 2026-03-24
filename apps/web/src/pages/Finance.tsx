@@ -16,7 +16,7 @@ type FinanceEntry = {
   created_at: string
 }
 
-const FINANCE_TYPES = ["salary", "freelance", "spend", "other"] as const
+const FINANCE_TYPES = ["salary", "freelance", "insta_paid_collab", "spend", "other"] as const
 const ENTRY_FILTERS = ["all", "income", "expense"] as const
 type EntryFilter = (typeof ENTRY_FILTERS)[number]
 
@@ -31,6 +31,20 @@ function parseDate(s: string) {
 
 function isExpenseType(type: string) {
   return type === "other" || type === "spend"
+}
+
+function signedAmount(entry: FinanceEntry) {
+  if (isExpenseType(entry.type)) return -Math.abs(entry.amount)
+  return entry.amount
+}
+
+function financeTypeLabel(type: string) {
+  switch (type) {
+    case "insta_paid_collab":
+      return "Insta paid collab"
+    default:
+      return type
+  }
 }
 
 export function Finance() {
@@ -69,13 +83,13 @@ export function Finance() {
       const { year, month } = parseDate(e.date)
       return `${year}-${String(month).padStart(2, "0")}` === thisMonthKey
     })
-    .reduce((sum, e) => sum + e.amount, 0)
+    .reduce((sum, e) => sum + signedAmount(e), 0)
   const lastMonthTotal = entries
     .filter((e) => {
       const { year, month } = parseDate(e.date)
       return `${year}-${String(month).padStart(2, "0")}` === lastMonthKey
     })
-    .reduce((sum, e) => sum + e.amount, 0)
+    .reduce((sum, e) => sum + signedAmount(e), 0)
   const delta = thisMonthTotal - lastMonthTotal
 
   async function handleAdd(e: React.FormEvent) {
@@ -195,7 +209,7 @@ export function Finance() {
                 <li key={e.id} className="flex items-center justify-between rounded-lg border border-border p-3">
                   <div>
                     <p className={`font-medium ${isExpenseType(e.type) || e.amount < 0 ? "text-red-600" : "text-green-600"}`}>
-                      {formatRupees(e.amount)} · {e.type}
+                      {formatRupees(signedAmount(e))} · {financeTypeLabel(e.type)}
                     </p>
                     <p className="text-sm text-muted-foreground">{e.date}{e.note ? ` · ${e.note}` : ""}</p>
                   </div>
