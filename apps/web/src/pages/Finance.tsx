@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
+import { Trash2 } from "lucide-react"
 
 type FinanceEntry = {
   id: string
@@ -16,6 +17,8 @@ type FinanceEntry = {
 }
 
 const FINANCE_TYPES = ["salary", "freelance", "other"] as const
+const ENTRY_FILTERS = ["all", "income", "expense"] as const
+type EntryFilter = (typeof ENTRY_FILTERS)[number]
 
 function getMonthKey(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
@@ -26,6 +29,10 @@ function parseDate(s: string) {
   return { year: y, month: m }
 }
 
+function isExpenseType(type: string) {
+  return type === "other"
+}
+
 export function Finance() {
   const [entries, setEntries] = useState<FinanceEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -33,6 +40,7 @@ export function Finance() {
   const [financeType, setFinanceType] = useState<string>("freelance")
   const [note, setNote] = useState("")
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [entryFilter, setEntryFilter] = useState<EntryFilter>("all")
 
   async function load() {
     setLoading(true)
@@ -86,8 +94,23 @@ export function Finance() {
     }
   }
 
+  async function handleDelete(id: string) {
+    const confirmed = window.confirm("Delete this finance entry?")
+    if (!confirmed) return
+    const res = await apiFetch(`/finances/${id}`, { method: "DELETE" })
+    if (res.ok) {
+      setEntries((prev) => prev.filter((entry) => entry.id !== id))
+    }
+  }
+
   const formatRupees = (n: number) =>
     `₹${n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+
+  const filteredEntries = entries.filter((entry) => {
+    if (entryFilter === "all") return true
+    if (entryFilter === "expense") return isExpenseType(entry.type)
+    return !isExpenseType(entry.type)
+  })
 
   return (
     <div className="space-y-8">
@@ -149,18 +172,41 @@ export function Finance() {
           <CardDescription>Recent income entries</CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="mb-4 max-w-[220px] space-y-2">
+            <Label htmlFor="entry-filter">Filter entries</Label>
+            <Select
+              id="entry-filter"
+              value={entryFilter}
+              onChange={(e) => setEntryFilter(e.target.value as EntryFilter)}
+            >
+              <option value="all">All</option>
+              <option value="income">Income only</option>
+              <option value="expense">Expense only</option>
+            </Select>
+          </div>
           {loading ? (
             <p className="text-muted-foreground">Loading…</p>
-          ) : entries.length === 0 ? (
+          ) : filteredEntries.length === 0 ? (
             <p className="text-muted-foreground">No entries yet.</p>
           ) : (
             <ul className="space-y-2">
-              {entries.map((e) => (
+              {filteredEntries.map((e) => (
                 <li key={e.id} className="flex items-center justify-between rounded-lg border border-border p-3">
                   <div>
-                    <p className="font-medium">{formatRupees(e.amount)} · {e.type}</p>
+                    <p className={`font-medium ${isExpenseType(e.type) ? "text-red-600" : "text-green-600"}`}>
+                      {formatRupees(e.amount)} · {e.type}
+                    </p>
                     <p className="text-sm text-muted-foreground">{e.date}{e.note ? ` · ${e.note}` : ""}</p>
                   </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Delete finance entry"
+                    onClick={() => handleDelete(e.id)}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
                 </li>
               ))}
             </ul>

@@ -98,6 +98,7 @@ func main() {
 		r.Patch("/opportunities/{id}", oppH.Update)
 		r.Post("/finances", financeH.Create)
 		r.Get("/finances", financeH.List)
+		r.Delete("/finances/{id}", financeH.Delete)
 		r.Post("/coding-logs", codingLogH.Create)
 		r.Get("/coding-logs", codingLogH.List)
 		r.Post("/generate-content", aiH.GenerateContent)

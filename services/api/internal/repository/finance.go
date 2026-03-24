@@ -12,6 +12,7 @@ import (
 type FinanceRepository interface {
 	Create(ctx context.Context, userID uuid.UUID, amount float64, financeType model.FinanceType, note, date string) (*model.Finance, error)
 	List(ctx context.Context, userID uuid.UUID) ([]*model.Finance, error)
+	Delete(ctx context.Context, userID, financeID uuid.UUID) error
 	SumByMonth(ctx context.Context, userID uuid.UUID, year int, month int) (float64, error)
 }
 
@@ -53,6 +54,24 @@ func (r *financeRepo) List(ctx context.Context, userID uuid.UUID) ([]*model.Fina
 		out = append(out, f)
 	}
 	return out, rows.Err()
+}
+
+func (r *financeRepo) Delete(ctx context.Context, userID, financeID uuid.UUID) error {
+	result, err := r.db.ExecContext(ctx,
+		`DELETE FROM finances WHERE id = $1 AND user_id = $2`,
+		financeID, userID,
+	)
+	if err != nil {
+		return err
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
 }
 
 func (r *financeRepo) SumByMonth(ctx context.Context, userID uuid.UUID, year, month int) (float64, error) {

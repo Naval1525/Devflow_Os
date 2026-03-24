@@ -1,12 +1,14 @@
 package handler
 
 import (
+	"database/sql"
 	"devflowos/api/internal/middleware"
 	"devflowos/api/internal/model"
 	"devflowos/api/internal/service"
 	"encoding/json"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
@@ -59,6 +61,28 @@ func (h *FinanceHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	JSON(w, http.StatusOK, map[string]interface{}{"finances": list})
+}
+
+func (h *FinanceHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserIDFromContext(r.Context())
+	if userID == uuid.Nil {
+		ErrJSON(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	financeID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		ErrJSON(w, http.StatusBadRequest, "invalid id")
+		return
+	}
+	if err := h.finance.Delete(r.Context(), userID, financeID); err != nil {
+		if err == sql.ErrNoRows {
+			ErrJSON(w, http.StatusNotFound, "finance entry not found")
+			return
+		}
+		ErrJSON(w, http.StatusInternalServerError, "failed to delete finance entry")
+		return
+	}
+	JSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 }
 
 func parseFinanceType(s string) model.FinanceType {

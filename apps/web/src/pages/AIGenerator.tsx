@@ -48,6 +48,14 @@ const GEMINI_MODELS = [
   { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro (quality)" },
 ] as const
 
+const CONTENT_TONES = [
+  { value: "professional", label: "Professional" },
+  { value: "funny", label: "Funny" },
+  { value: "casual", label: "Casual" },
+  { value: "bold", label: "Bold" },
+  { value: "educational", label: "Educational" },
+] as const
+
 function buildTextFromLog(log: LeetCodeLog): string {
   return [
     `Problem: ${log.problem_name}`,
@@ -76,6 +84,7 @@ export function AIGenerator() {
   const [selectedIdeaId, setSelectedIdeaId] = useState<string>("")
   const [text, setText] = useState("")
   const [model, setModel] = useState<string>("gemini-2.5-flash")
+  const [tone, setTone] = useState<string>("professional")
   const [loadingAll, setLoadingAll] = useState(false)
   const [wantTweet, setWantTweet] = useState(true)
   const [wantReel, setWantReel] = useState(true)
@@ -196,7 +205,7 @@ export function AIGenerator() {
     try {
       const res = await apiFetch("/generate-content", {
         method: "POST",
-        body: JSON.stringify({ text: inputText, formats, model: model || undefined }),
+        body: JSON.stringify({ text: inputText, formats, model: model || undefined, tone }),
       })
       if (res.ok) {
         const data = await res.json()
@@ -261,6 +270,18 @@ export function AIGenerator() {
                 </option>
               ))}
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Tone</Label>
+            <Select value={tone} onChange={(e) => setTone(e.target.value)}>
+              {CONTENT_TONES.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </Select>
+            <p className="text-xs text-muted-foreground">Emoji-free output is enforced.</p>
           </div>
 
           {sourceType === "all" && (

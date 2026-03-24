@@ -46,12 +46,13 @@ type GenerateContentInput struct {
 	Text    string   `json:"text"`
 	Formats []string `json:"formats"` // "tweet", "reel_script", "hook"
 	Model   string   `json:"model"`   // optional: gemini-2.5-flash, gemini-2.5-flash-lite, gemini-2.5-pro
+	Tone    string   `json:"tone"`    // optional: professional, funny, casual, bold, educational
 }
 
 type GenerateContentOutput struct {
-	Tweet       string `json:"tweet,omitempty"`
-	ReelScript  string `json:"reel_script,omitempty"`
-	Hook        string `json:"hook,omitempty"`
+	Tweet        string `json:"tweet,omitempty"`
+	ReelScript   string `json:"reel_script,omitempty"`
+	Hook         string `json:"hook,omitempty"`
 	LinkedinPost string `json:"linkedin_post,omitempty"`
 }
 
@@ -63,8 +64,8 @@ func (s *AIContentService) Generate(ctx context.Context, input GenerateContentIn
 	if !isValidModel(model) {
 		model = DefaultModel
 	}
-	systemPrompt := buildSystemPrompt(input.Formats)
-	userPrompt := buildUserPrompt(input.Text, input.Formats)
+	systemPrompt := buildSystemPrompt(input.Formats, input.Tone)
+	userPrompt := buildUserPrompt(input.Text, input.Formats, input.Tone)
 	reqBody := map[string]interface{}{
 		"systemInstruction": map[string]interface{}{
 			"parts": []map[string]interface{}{{"text": systemPrompt}},
@@ -74,7 +75,7 @@ func (s *AIContentService) Generate(ctx context.Context, input GenerateContentIn
 		},
 		"generationConfig": map[string]interface{}{
 			"maxOutputTokens": 1024,
-			"temperature":    0.6,
+			"temperature":     0.6,
 		},
 	}
 	body, _ := json.Marshal(reqBody)
@@ -121,10 +122,20 @@ func (s *AIContentService) Generate(ctx context.Context, input GenerateContentIn
 	return parseGeneratedText(text, input.Formats), nil
 }
 
-func buildSystemPrompt(formats []string) string {
+func normalizeTone(tone string) string {
+	switch strings.ToLower(strings.TrimSpace(tone)) {
+	case "professional", "funny", "casual", "bold", "educational":
+		return strings.ToLower(strings.TrimSpace(tone))
+	default:
+		return "professional"
+	}
+}
+
+func buildSystemPrompt(formats []string, tone string) string {
 	if len(formats) == 0 {
 		formats = []string{"tweet", "reel_script", "hook"}
 	}
+	selectedTone := normalizeTone(tone)
 	return `You are a dev creator content assistant. Turn the user's input (coding notes, LeetCode solutions, ideas) into ready-to-post content.
 
 Rules:
@@ -132,14 +143,17 @@ Rules:
 2. Tweet: under 280 characters, engaging, 1-2 relevant hashtags (e.g. #Coding #LeetCode).
 3. Hook: one punchy line only. No hashtags.
 4. Reel script: 3-5 numbered steps. Each step: number, then (brief visual/action in parentheses), then the line in quotes. Example: 1. (Confused look) "Got you stuck?" 2. (Lightbulb) "Here's the fix:"
-5. LinkedIn post: professional tone, 1-3 short paragraphs, optional 2-4 hashtags at the end. Suitable for LinkedIn.
-6. Be concise and actionable. No filler.`
+5. LinkedIn post: ` + selectedTone + ` tone, 1-3 short paragraphs, optional 2-4 hashtags at the end. Suitable for LinkedIn.
+6. Apply this tone to every requested format: ` + selectedTone + `.
+7. Never use emojis or emoticons in any output.
+8. Be concise and actionable. No filler.`
 }
 
-func buildUserPrompt(text string, formats []string) string {
+func buildUserPrompt(text string, formats []string, tone string) string {
 	if len(formats) == 0 {
 		formats = []string{"tweet", "reel_script", "hook"}
 	}
+	selectedTone := normalizeTone(tone)
 	var want []string
 	for _, f := range formats {
 		switch f {
@@ -156,7 +170,7 @@ func buildUserPrompt(text string, formats []string) string {
 	if len(want) == 0 {
 		want = []string{"TWEET", "REEL SCRIPT", "HOOK"}
 	}
-	return fmt.Sprintf("Generate only: %s\n\nUser input:\n%s", strings.Join(want, ", "), text)
+	return fmt.Sprintf("Generate only: %s\nTone: %s\nStrict rule: do not use emojis.\n\nUser input:\n%s", strings.Join(want, ", "), selectedTone, text)
 }
 
 func parseGeneratedText(text string, _ []string) *GenerateContentOutput {
