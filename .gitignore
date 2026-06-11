@@ -5,6 +5,7 @@ node_modules/
 dist/
 *.exe
 
+
 # Env
 .env
 .env.local
